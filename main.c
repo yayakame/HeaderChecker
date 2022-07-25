@@ -1,5 +1,3 @@
-// Your First C++ Program
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -9,10 +7,10 @@
 #include <limits.h>
 #include <time.h>
 
-#include "program.h"
+#include "main.h"
 #include "console_colors.h"
 
-char file_header[] =
+char original_header[] =
     {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52, 0x00, 0x00};
 
 int current_depth = -1;
@@ -58,14 +56,14 @@ void find_and_delete_terraria_files(char *initial_folder_path)
         return;
     }
     char folder_path[512];
-    
+
     strcpy(folder_path, initial_folder_path);
     sprintf(path_inside, "%s\\*", initial_folder_path);
 
     HANDLE file_hwnd;
 
     current_depth += 1;
-    
+
     change_console_color(console_hwnd, old_console_colors);
     printf("currently at %s, depth : %d\n", initial_folder_path, current_depth);
 
@@ -91,13 +89,12 @@ void find_and_delete_terraria_files(char *initial_folder_path)
         }
         else
         {
-            int header_size_b = sizeof(file_header);
-            char header_buffer[header_size_b];
+            int header_size_b = sizeof(original_header);
+            char file_header[header_size_b];
             FILE *file_being_read = fopen(sub_f_path, "rb");
-            fread(header_buffer, 1, header_size_b, file_being_read);
+            fread(file_header, 1, header_size_b, file_being_read);
             fclose(file_being_read);
-
-            if (compare_arrays(header_buffer, file_header, 0, header_size_b, 1))
+            if (memcmp(file_header, original_header, header_size_b) == 0)
             {
                 char file_contents[512];
                 sprintf(file_contents, "%s\n", sub_f_path);
@@ -115,18 +112,6 @@ void find_and_delete_terraria_files(char *initial_folder_path)
     } while (FindNextFileA(file_hwnd, &find_data));
     FindClose(file_hwnd);
     current_depth -= 1;
-}
-
-bool compare_arrays(void *arr1, void *arr2, size_t start, size_t count, size_t element_size)
-{
-    for (size_t i = start; i < count * element_size; i++)
-    {
-        if (((char *)arr1)[i] != ((char *)arr2)[i])
-        {
-            return false;
-        }
-    }
-    return true;
 }
 
 void change_console_color(HANDLE console_handle, WORD colors)
