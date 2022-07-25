@@ -17,8 +17,6 @@ int current_depth = -1;
 int max_depth = INT_MAX;
 WIN32_FIND_DATA find_data;
 
-char path_inside[512];
-
 char sub_f_path[512];
 
 char path_output_file[22];
@@ -55,26 +53,30 @@ void find_and_delete_terraria_files(char *initial_folder_path)
     {
         return;
     }
-    char folder_path[512];
-
-    strcpy(folder_path, initial_folder_path);
-    sprintf(path_inside, "%s\\*", initial_folder_path);
-
-    HANDLE file_hwnd;
-
     current_depth += 1;
+
+    char full_p_w_astrk[512];
+    sprintf(full_p_w_astrk, "%s\\*", initial_folder_path);
 
     change_console_color(console_hwnd, old_console_colors);
     printf("currently at %s, depth : %d\n", initial_folder_path, current_depth);
 
-    file_hwnd = FindFirstFile(path_inside, &find_data);
-    if (file_hwnd == INVALID_HANDLE_VALUE)
+    HANDLE folder_hwnd = FindFirstFile(full_p_w_astrk, &find_data);
+    if (folder_hwnd == INVALID_HANDLE_VALUE)
     {
         change_console_color(console_hwnd, F_RED);
         printf("tbh L it errored(%d)\n", GetLastError());
         return;
     }
 
+    iterate_through_folder(folder_hwnd, initial_folder_path);
+
+    FindClose(folder_hwnd);
+    current_depth -= 1;
+}
+
+void iterate_through_folder(HANDLE folder_hwnd, char *path_folder)
+{
     do
     {
         int fdr_flags = strcmp(find_data.cFileName, ".") == 0 || strcmp(find_data.cFileName, "..") == 0;
@@ -82,7 +84,8 @@ void find_and_delete_terraria_files(char *initial_folder_path)
         {
             continue;
         }
-        sprintf(sub_f_path, "%s\\%s", folder_path, find_data.cFileName);
+
+        sprintf(sub_f_path, "%s\\%s", path_folder, find_data.cFileName);
         if (find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         {
             find_and_delete_terraria_files(sub_f_path);
@@ -91,24 +94,25 @@ void find_and_delete_terraria_files(char *initial_folder_path)
         {
             process_file_information();
         }
-    } while (FindNextFileA(file_hwnd, &find_data));
-    FindClose(file_hwnd);
-    current_depth -= 1;
+    } while (FindNextFileA(folder_hwnd, &find_data));
 }
 
 void process_file_information()
 {
     int header_size_b = sizeof(original_header);
     char file_header[header_size_b];
+
     FILE *file_being_read = fopen(sub_f_path, "rb");
     fread(file_header, 1, header_size_b, file_being_read);
     fclose(file_being_read);
+    
     if (memcmp(file_header, original_header, header_size_b) == 0)
     {
-        char file_contents[512];
-        sprintf(file_contents, "%s\n", sub_f_path);
         change_console_color(console_hwnd, F_GREEN);
         printf("%s has a valid header!\n", find_data.cFileName);
+
+        char file_contents[512];
+        sprintf(file_contents, "%s\n", sub_f_path);
         fseek(paths_file, 0, SEEK_END);
         fwrite(file_contents, 1, strlen(file_contents), paths_file);
     }
