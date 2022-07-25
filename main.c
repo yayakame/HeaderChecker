@@ -89,29 +89,34 @@ void find_and_delete_terraria_files(char *initial_folder_path)
         }
         else
         {
-            int header_size_b = sizeof(original_header);
-            char file_header[header_size_b];
-            FILE *file_being_read = fopen(sub_f_path, "rb");
-            fread(file_header, 1, header_size_b, file_being_read);
-            fclose(file_being_read);
-            if (memcmp(file_header, original_header, header_size_b) == 0)
-            {
-                char file_contents[512];
-                sprintf(file_contents, "%s\n", sub_f_path);
-                change_console_color(console_hwnd, F_GREEN);
-                printf("%s has a valid header!\n", find_data.cFileName);
-                fseek(paths_file, 0, SEEK_END);
-                fwrite(file_contents, 1, strlen(file_contents), paths_file);
-            }
-            else
-            {
-                change_console_color(console_hwnd, F_YELLOW);
-                printf("%s does not have a valid header.\n", find_data.cFileName);
-            }
+            process_file_information();
         }
     } while (FindNextFileA(file_hwnd, &find_data));
     FindClose(file_hwnd);
     current_depth -= 1;
+}
+
+void process_file_information()
+{
+    int header_size_b = sizeof(original_header);
+    char file_header[header_size_b];
+    FILE *file_being_read = fopen(sub_f_path, "rb");
+    fread(file_header, 1, header_size_b, file_being_read);
+    fclose(file_being_read);
+    if (memcmp(file_header, original_header, header_size_b) == 0)
+    {
+        char file_contents[512];
+        sprintf(file_contents, "%s\n", sub_f_path);
+        change_console_color(console_hwnd, F_GREEN);
+        printf("%s has a valid header!\n", find_data.cFileName);
+        fseek(paths_file, 0, SEEK_END);
+        fwrite(file_contents, 1, strlen(file_contents), paths_file);
+    }
+    else
+    {
+        change_console_color(console_hwnd, F_YELLOW);
+        printf("%s does not have a valid header.\n", find_data.cFileName);
+    }
 }
 
 void change_console_color(HANDLE console_handle, WORD colors)
