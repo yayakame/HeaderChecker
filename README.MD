@@ -13,13 +13,12 @@ Input a file path when the program asks for it. i.e.
 Refrain from using invalid paths, as it will just make the program exit (too lazy to implement that check tbh)
 # How it works
 It utilizes recursion as a mean to go through all sub-directories within a directory, also ignoring the (((comical))) '.' & '..' folders, since they are essentially invalid for the intent present here
+
 When finding a file, it compares the pre-set header within the source code and the header from the file, appending it to a file if the comparison is successful
 
 *max_depth* controls how deep the method can go before returning
 
 *sub_f_path* is used to store the full path of the current file/folder
-
-*path_inside* is simply the **initial_folder_path** parameter, but with added `\\*` for it to search everything within the directory
 
 *path_output_file* is the name of the output file for outputting valid paths to (no need for full paths here)
 
